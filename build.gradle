@@ -1,0 +1,59 @@
+plugins {
+    id 'application'
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'io.openlineage.demo'
+version = '0.1.0'
+
+ext {
+    sparkVersion = '3.5.8'
+    junitVersion = '5.13.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+application {
+    mainClass = 'io.openlineage.demo.CustomerPipelineApp'
+}
+
+dependencies {
+    compileOnly "org.apache.spark:spark-sql_2.12:${sparkVersion}"
+
+    testImplementation "org.apache.spark:spark-sql_2.12:${sparkVersion}"
+    testImplementation platform("org.junit:junit-bom:${junitVersion}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    jvmArgs '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED'
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes('Main-Class': application.mainClass.get())
+    }
+}
+
+tasks.named('shadowJar') {
+    archiveClassifier = 'all'
+    manifest {
+        attributes('Main-Class': application.mainClass.get())
+    }
+}
