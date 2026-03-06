@@ -170,6 +170,28 @@ wc -l build/openlineage/events.jsonl
 tail -n 2 build/openlineage/events.jsonl | jq .
 ```
 
+In the `columnLineage` facet, each output column can list one or more lineage transformations with a `type` and `subtype`.
+
+- `DIRECT`: the output column is derived directly from referenced upstream columns.
+- `INDIRECT`: the output column is affected by upstream columns through query structure rather than a direct value mapping.
+
+Direct subtypes:
+
+- `IDENTITY`: a source column is passed through unchanged, such as `email -> email`.
+- `TRANSFORMATION`: a row-level expression changes the value, such as `first_name + last_name -> fullname`.
+- `AGGREGATION`: multiple input rows are reduced into one output value, such as `sum(amount)` or `count(*)`.
+
+Indirect subtypes:
+
+- `JOIN`: the output depends on columns used to join datasets.
+- `GROUP_BY`: the output depends on grouping keys.
+- `FILTER`: the output depends on columns used in row filtering.
+- `SORT`: the output depends on ordering columns.
+- `WINDOW`: the output depends on window partitioning or ordering.
+- `CONDITIONAL`: the output depends on branching logic such as `CASE WHEN`.
+
+For this demo, expect only `DIRECT` lineage: passthrough columns like `customer_id` and `email` should be `IDENTITY`, while derived columns like `fullname`, `age`, and `customer_tenure_years` should be `TRANSFORMATION`.
+
 ### Manual Smoke Query
 
 You can inspect the curated dataset with Spark directly:
