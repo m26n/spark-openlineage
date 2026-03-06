@@ -304,7 +304,7 @@ services:
       - "9002:9002"
 
   spark:
-    image: apache/spark:4.1.1-scala2.13-java17-python3-r-ubuntu
+    image: apache/spark:4.1.1-scala2.13-java21-python3-r-ubuntu
     container_name: spark-openlineage-spark
     depends_on:
       postgres-source:

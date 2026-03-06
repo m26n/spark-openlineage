@@ -4,7 +4,7 @@ This repo contains a local demo that reads customer data from PostgreSQL with Sp
 
 ## Stack
 
-- Spark 4.1.1 job in Java 17
+- Spark 4.1.1 job in Java 21
 - Gradle 8.14.4 wrapper
 - PostgreSQL source database seeded by Docker Compose
 - MinIO object storage with a pre-created `customer-lake` bucket
