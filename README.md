@@ -170,6 +170,12 @@ wc -l build/openlineage/events.jsonl
 tail -n 2 build/openlineage/events.jsonl | jq .
 ```
 
+OpenLineage has three top-level event categories:
+
+- `RunEvent`: emitted for a specific job execution, including the `job`, the `run`, consumed inputs, produced outputs, and execution-time facets. This Spark demo emits `RunEvent`s.
+- `DatasetEvent`: emitted when dataset metadata changes outside a specific run, such as schema or other dataset-level properties.
+- `JobEvent`: emitted when job metadata changes outside a specific run, such as configuration or other job-level properties.
+
 In the `columnLineage` facet, each output column can list one or more lineage transformations with a `type` and `subtype`.
 
 - `DIRECT`: the output column is derived directly from referenced upstream columns.
