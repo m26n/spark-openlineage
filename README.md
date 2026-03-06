@@ -4,7 +4,7 @@ This repo contains a local demo that reads customer data from PostgreSQL with Sp
 
 ## Stack
 
-- Spark 3.5.8 job in Java 17
+- Spark 4.1.1 job in Java 17
 - Gradle 8.14.4 wrapper
 - PostgreSQL source database seeded by Docker Compose
 - MinIO object storage with a pre-created `customer-lake` bucket
@@ -58,7 +58,7 @@ docker compose run --rm \
   --entrypoint /opt/spark/bin/spark-submit \
   spark \
   --master 'local[*]' \
-  --packages io.openlineage:openlineage-spark_2.12:1.44.0,org.apache.hadoop:hadoop-aws:3.3.4,org.postgresql:postgresql:42.7.7 \
+  --packages io.openlineage:openlineage-spark_2.13:1.44.0,org.apache.hadoop:hadoop-aws:3.4.3,org.postgresql:postgresql:42.7.10 \
   --conf spark.jars.ivy=/tmp/spark-home/.ivy2 \
   --conf spark.extraListeners=io.openlineage.spark.agent.OpenLineageSparkListener \
   --conf spark.openlineage.transport.type=http \
@@ -136,7 +136,7 @@ docker compose run --rm \
   --entrypoint /opt/spark/bin/spark-sql \
   spark \
   --master 'local[*]' \
-  --packages org.apache.hadoop:hadoop-aws:3.3.4 \
+  --packages org.apache.hadoop:hadoop-aws:3.4.3 \
   --conf spark.jars.ivy=/tmp/spark-home/.ivy2 \
   --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000 \
   --conf spark.hadoop.fs.s3a.access.key=minioadmin \
