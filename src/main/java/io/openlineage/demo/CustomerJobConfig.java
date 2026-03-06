@@ -52,9 +52,9 @@ final class CustomerJobConfig {
                 values.getOrDefault("jdbc-password", "customers"),
                 values.getOrDefault("source-table", "public.customers"),
                 values.getOrDefault("output-path", "s3a://customer-lake/customers_curated/"),
-                values.getOrDefault("s3-endpoint", "http://minio:9000"),
-                values.getOrDefault("s3-access-key", "minioadmin"),
-                values.getOrDefault("s3-secret-key", "minioadmin"));
+                values.getOrDefault("s3-endpoint", "http://seaweedfs-s3:8333"),
+                values.getOrDefault("s3-access-key", "seaweedfsadmin"),
+                values.getOrDefault("s3-secret-key", "seaweedfsadmin123"));
     }
 
     String appName() {
@@ -93,4 +93,3 @@ final class CustomerJobConfig {
         return s3SecretKey;
     }
 }
-

@@ -16,29 +16,67 @@ services:
     volumes:
       - ./docker/postgres/source/init:/docker-entrypoint-initdb.d:ro
 
-  minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-    container_name: spark-openlineage-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:4.15
+    container_name: spark-openlineage-seaweedfs-master
+    command: master -ip=seaweedfs-master -ip.bind=0.0.0.0 -metricsPort=9324
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "9333:9333"
 
-  minio-bootstrap:
-    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
-    container_name: spark-openlineage-minio-bootstrap
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:4.15
+    container_name: spark-openlineage-seaweedfs-volume
+    command: volume -ip=seaweedfs-volume -master=seaweedfs-master:9333 -ip.bind=0.0.0.0 -port=8080 -metricsPort=9325
     depends_on:
-      minio:
+      seaweedfs-master:
         condition: service_started
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:4.15
+    container_name: spark-openlineage-seaweedfs-filer
+    command: filer -ip=seaweedfs-filer -master=seaweedfs-master:9333 -ip.bind=0.0.0.0 -metricsPort=9326
+    depends_on:
+      seaweedfs-master:
+        condition: service_started
+      seaweedfs-volume:
+        condition: service_started
+    ports:
+      - "8888:8888"
+
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:4.15
+    container_name: spark-openlineage-seaweedfs-s3
+    command: s3 -config=/etc/seaweedfs/s3.json -filer=seaweedfs-filer:8888 -ip.bind=0.0.0.0 -metricsPort=9327
+    depends_on:
+      seaweedfs-master:
+        condition: service_started
+      seaweedfs-volume:
+        condition: service_started
+      seaweedfs-filer:
+        condition: service_started
+    ports:
+      - "8333:8333"
+    volumes:
+      - ./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+
+  seaweedfs-bootstrap:
+    image: amazon/aws-cli:2.34.3
+    container_name: spark-openlineage-seaweedfs-bootstrap
+    depends_on:
+      seaweedfs-s3:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: seaweedfsadmin
+      AWS_SECRET_ACCESS_KEY: seaweedfsadmin123
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_DEFAULT_REGION: us-east-1
     entrypoint:
       - /bin/sh
       - -c
       - |
-        until mc alias set local http://minio:9000 minioadmin minioadmin; do sleep 2; done
-        mc mb --ignore-existing local/customer-lake
+        until aws s3 ls --endpoint-url http://seaweedfs-s3:8333 >/dev/null 2>&1; do sleep 2; done
+        aws s3api head-bucket --bucket customer-lake --endpoint-url http://seaweedfs-s3:8333 >/dev/null 2>&1 \
+          || aws s3 mb s3://customer-lake --endpoint-url http://seaweedfs-s3:8333
 
   broker:
     image: confluentinc/cp-kafka:8.0.0
@@ -309,9 +347,9 @@ services:
     depends_on:
       postgres-source:
         condition: service_healthy
-      minio:
+      seaweedfs-s3:
         condition: service_started
-      minio-bootstrap:
+      seaweedfs-bootstrap:
         condition: service_completed_successfully
     environment:
       HOME: /tmp/spark-home
